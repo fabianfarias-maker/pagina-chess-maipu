@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Maipú | Club Comunal de Ajedrez - Santiago, Chile</title>
+  <meta name="description" content="Club de ajedrez en Maipú, Santiago de Chile. Clases multinivel, torneos internos y abiertos, comunidad y tablero virtual interactivo.">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              red: '#e11d48',
+              'red-dark': '#be123c',
+              slate: '#0f172a'
+            }
+          },
+          fontFamily: {
+            heading: ['Montserrat', 'system-ui', 'sans-serif'],
+            body: ['Plus Jakarta Sans', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Leaflet CSS & JS para Mapa de Maipú -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Estilos Limpios en Fondo Blanco -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-white text-slate-800 min-h-screen flex flex-col antialiased selection:bg-rose-500 selection:text-white">
+
+  <!-- ==================== NAVEGACIÓN LIMPIA (ESTILO VERSIÓN 1 CON CLASES Y TORNEOS SEPARADOS) ==================== -->
+  <header class="fixed top-0 left-0 right-0 z-50 navbar-clean transition-all duration-200" id="navbar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Logo -->
+        <a href="#inicio" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black tracking-tighter text-sm group-hover:bg-rose-600 transition-colors shadow-sm">
+            CCM
+          </div>
+          <div class="flex flex-col">
+            <span class="font-extrabold text-base tracking-tight text-slate-900 flex items-center gap-1.5 font-heading">
+              CLUB CHESS <span class="text-rose-600">MAIPÚ</span>
+            </span>
+            <span class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold">Club de Ajedrez • Santiago</span>
+          </div>
+        </a>
+
+        <!-- Menú Escritorio Oficial -->
+        <nav class="hidden xl:flex items-center gap-7 font-semibold text-xs text-slate-600 uppercase tracking-wider">
+          <a href="#inicio" class="hover:text-rose-600 transition-colors">Inicio</a>
+          
+          <!-- Dropdown Nosotros (Sede, Contacto, Historia) -->
+          <div class="relative dropdown-parent py-2">
+            <button class="hover:text-rose-600 transition-colors flex items-center gap-1 font-semibold uppercase focus:outline-none">
+              <span>Nosotros</span>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+            </button>
+            <div class="dropdown-menu absolute top-full left-0 w-44 bg-white border border-slate-200 rounded-lg shadow-xl p-2 space-y-1 text-xs">
+              <a href="#sede" class="block px-3 py-2 rounded hover:bg-rose-50 hover:text-rose-600 font-bold text-slate-800 transition-colors">Sede</a>
+              <a href="#sede" class="block px-3 py-2 rounded hover:bg-rose-50 hover:text-rose-600 font-bold text-slate-800 transition-colors">Contacto</a>
+              <a href="#historia" class="block px-3 py-2 rounded hover:bg-rose-50 hover:text-rose-600 font-bold text-slate-800 transition-colors">Historia</a>
+            </div>
+          </div>
+
+          <a href="#clases" class="hover:text-rose-600 transition-colors font-bold text-slate-900">Clases</a>
+          <a href="#torneos" class="hover:text-rose-600 transition-colors font-bold text-slate-900">Torneos</a>
+          <a href="#tablero-virtual" class="hover:text-rose-600 transition-colors flex items-center gap-1.5 text-rose-600 font-bold">
+            <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+            Tablero Virtual
+          </a>
+          <a href="#noticias" class="hover:text-rose-600 transition-colors">Noticias</a>
+          <a href="#calendario" class="hover:text-rose-600 transition-colors">Calendario</a>
+        </nav>
+
+        <!-- CTA Inscripción -->
+        <div class="hidden sm:flex items-center gap-3">
+          <button onclick="openModal('registro')" class="btn-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider">
+            Únete al Club
+          </button>
+        </div>
+
+        <!-- Botón Móvil -->
+        <div class="xl:hidden flex items-center">
+          <button id="mobile-menu-btn" class="p-2 text-slate-700 hover:text-rose-600 focus:outline-none" aria-label="Abrir menú">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Menú Desplegable Móvil -->
+    <div id="mobile-menu" class="hidden xl:hidden bg-white border-b border-slate-200 px-6 py-6 space-y-3 text-xs font-bold uppercase tracking-wider text-slate-700 shadow-xl">
+      <a href="#inicio" class="block py-1 hover:text-rose-600">Inicio</a>
+      <div class="space-y-1 pl-2 border-l-2 border-rose-200">
+        <span class="block py-1 text-slate-400 font-extrabold">Nosotros</span>
+        <a href="#sede" class="block py-1 pl-2 hover:text-rose-600 text-slate-800 font-bold">Sede</a>
+        <a href="#sede" class="block py-1 pl-2 hover:text-rose-600 text-slate-800 font-bold">Contacto</a>
+        <a href="#historia" class="block py-1 pl-2 hover:text-rose-600 text-slate-800 font-bold">Historia</a>
+      </div>
+      <a href="#clases" class="block py-1 text-slate-900 font-extrabold hover:text-rose-600">Clases</a>
+      <a href="#torneos" class="block py-1 text-slate-900 font-extrabold hover:text-rose-600">Torneos</a>
+      <a href="#tablero-virtual" class="block py-1 text-rose-600 font-extrabold">Tablero Virtual</a>
+      <a href="#noticias" class="block py-1 hover:text-rose-600">Noticias</a>
+      <a href="#calendario" class="block py-1 hover:text-rose-600">Calendario</a>
+      <div class="pt-2">
+        <button onclick="openModal('registro')" class="w-full btn-primary py-2.5 text-xs">
+          Únete al Club
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow pt-20">
+
+    <!-- ==================== HERO SECTION (LIMPIO, LUMINOSO Y SIN ESPACIOS VACÍOS) ==================== -->
+    <section id="inicio" class="pt-10 pb-16 sm:py-20 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          
+          <!-- Texto Principal -->
+          <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold uppercase tracking-wider">
+              <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+              Club Oficial de Ajedrez • Maipú, Santiago
+            </div>
+
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] font-heading">
+              Club Chess Maipú<br class="hidden sm:inline">
+              <span class="text-rose-600">Ajedrez, Mente & Comunidad</span>
+            </h1>
+
+            <p class="text-slate-600 text-base sm:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              La casa del ajedrez en nuestra comuna. Aprende desde cero, compite en torneos oficiales y comparte la pasión del juego ciencia en un ambiente moderno y cercano para todas las edades.
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
+              <button onclick="openModal('registro')" class="btn-primary px-7 py-3.5 text-xs font-bold uppercase tracking-wider">
+                Inscribirse al Club
+              </button>
+
+              <a href="#tablero-virtual" class="btn-secondary px-6 py-3.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="play" class="w-4 h-4 text-rose-600"></i>
+                Probar Tablero Digital
+              </a>
+            </div>
+
+            <!-- Datos Rápidos del Club -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-200">
+              <div class="text-center lg:text-left">
+                <div class="text-2xl sm:text-3xl font-black text-slate-900 font-heading">+150</div>
+                <div class="text-xs text-slate-500 font-medium">Socios Activos</div>
+              </div>
+              <div class="text-center lg:text-left">
+                <div class="text-2xl sm:text-3xl font-black text-rose-600 font-heading">3 Niveles</div>
+                <div class="text-xs text-slate-500 font-medium">Clases Formativas</div>
+              </div>
+              <div class="text-center lg:text-left">
+                <div class="text-2xl sm:text-3xl font-black text-slate-900 font-heading">Sábados</div>
+                <div class="text-xs text-slate-500 font-medium">Clases y Torneos Blitz</div>
+              </div>
+              <div class="text-center lg:text-left">
+                <div class="text-2xl sm:text-3xl font-black text-slate-900 font-heading">Metro L5</div>
+                <div class="text-xs text-slate-500 font-medium">Plaza de Maipú</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tarjeta Destacada del Tablero / Club Preview -->
+          <div class="lg:col-span-5">
+            <div class="card-clean p-6 sm:p-8 bg-slate-900 text-white space-y-6 shadow-xl">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                  <span class="text-xs font-bold uppercase tracking-widest text-slate-300">Chess Maipú Arena</span>
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-rose-600 text-white rounded">
+                  En Vivo
+                </span>
+              </div>
+
+              <!-- Mini Cuadrícula Visual -->
+              <div class="bg-slate-950 p-4 rounded-lg border border-slate-800">
+                <div class="grid grid-cols-4 gap-1.5 w-44 h-44 sm:w-52 sm:h-52 mx-auto">
+                  <div class="bg-[#f1f5f9] rounded flex items-center justify-center text-slate-900 text-2xl font-bold">♜</div>
+                  <div class="bg-[#64748b] rounded flex items-center justify-center text-slate-900 text-2xl font-bold">♞</div>
+                  <div class="bg-[#f1f5f9] rounded flex items-center justify-center text-slate-900 text-2xl font-bold">♝</div>
+                  <div class="bg-[#64748b] rounded flex items-center justify-center text-slate-900 text-2xl font-bold">♛</div>
+                  <div class="bg-[#64748b] rounded"></div>
+                  <div class="bg-[#f1f5f9] rounded flex items-center justify-center text-slate-900 text-2xl font-bold">♟</div>
+                  <div class="bg-[#64748b] rounded"></div>
+                  <div class="bg-[#f1f5f9] rounded flex items-center justify-center text-slate-900 text-2xl font-bold">♟</div>
+                  <div class="bg-[#f1f5f9] rounded flex items-center justify-center text-white text-2xl font-bold drop-shadow">♙</div>
+                  <div class="bg-[#64748b] rounded"></div>
+                  <div class="bg-[#f1f5f9] rounded flex items-center justify-center text-white text-2xl font-bold drop-shadow">♘</div>
+                  <div class="bg-[#64748b] rounded"></div>
+                  <div class="bg-[#64748b] rounded flex items-center justify-center text-white text-2xl font-bold drop-shadow">♖</div>
+                  <div class="bg-[#f1f5f9] rounded"></div>
+                  <div class="bg-[#64748b] rounded flex items-center justify-center text-white text-2xl font-bold drop-shadow">♕</div>
+                  <div class="bg-[#f1f5f9] rounded flex items-center justify-center text-white text-2xl font-bold drop-shadow">♔</div>
+                </div>
+              </div>
+
+              <div class="space-y-2 text-center">
+                <h3 class="text-base font-bold text-white uppercase tracking-tight">¿Listo para jugar con reloj?</h3>
+                <p class="text-xs text-slate-400">
+                  Participa en nuestros encuentros semanales o practica problemas tácticos en línea.
+                </p>
+                <div class="pt-2">
+                  <a href="#tablero-virtual" class="block w-full py-2.5 rounded bg-slate-800 hover:bg-rose-600 text-white text-xs font-bold uppercase tracking-wider transition-colors">
+                    Ir al Tablero Interactivo →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== HISTORIA Y VALORES DEL CLUB ==================== -->
+    <section id="historia" class="py-16 sm:py-24 bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+        
+        <!-- PARTE 1: HISTORIA DEL CLUB -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          <div class="lg:col-span-5 space-y-4">
+            <span class="text-xs font-extrabold uppercase tracking-widest text-rose-600">Nuestras Raíces</span>
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight font-heading">
+              Historia del Club
+            </h2>
+            <div class="w-12 h-1 bg-rose-600"></div>
+            <p class="text-slate-600 text-sm leading-relaxed pt-2">
+              Nacidos en la histórica comuna de Maipú con el propósito de acercar el deporte ciencia, la sana competitividad y el encuentro intergeneracional.
+            </p>
+          </div>
+
+          <div class="lg:col-span-7">
+            <div class="card-clean p-8 bg-slate-50 border border-slate-200 space-y-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-slate-900 text-white rounded-lg flex items-center justify-center font-bold text-sm">
+                  CCM
+                </div>
+                <div>
+                  <h3 class="font-extrabold text-slate-900 text-base font-heading">El Renacer del Ajedrez en Maipú</h3>
+                  <span class="text-xs text-slate-500 font-medium">Desde los primeros tableros comunales hasta la alta competencia</span>
+                </div>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Club Chess Maipú nació del encuentro apasionado entre escolares, aficionados y vecinos de la comuna. Lo que comenzó como encuentros sabatinos y talleres en centros comunitarios cerca de la Plaza de Maipú, evolucionó rápidamente en una institución organizada y federada. Hoy contamos con una sede permanente a pasos del Metro Plaza de Maipú, donde formamos a nuevas generaciones, organizamos torneos oficiales con ranking y mantenemos vivas las 64 casillas en la zona poniente de Santiago.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- PARTE 2: LOS 5 VALORES FUNDAMENTALES -->
+        <div class="space-y-10 pt-6 border-t border-slate-100">
+          <div class="text-center space-y-2">
+            <span class="text-xs font-extrabold uppercase tracking-widest text-rose-600">Nuestros Pilares</span>
+            <h3 class="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight font-heading">
+              5 Valores Fundamentales
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
+              Principios que guían nuestro juego en el tablero y nuestra convivencia en el club.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- Valor 1: Inclusión Social -->
+            <div class="card-clean p-6 space-y-3">
+              <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center font-bold">
+                <i data-lucide="users" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-base font-black text-slate-900 uppercase font-heading">Inclusión Social</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                El ajedrez derriba cualquier barrera social o generacional. En nuestro club, niños, jóvenes, adultos y personas mayores comparten el tablero en completa igualdad.
+              </p>
+            </div>
+
+            <!-- Valor 2: Juego Limpio -->
+            <div class="card-clean p-6 space-y-3">
+              <div class="w-10 h-10 bg-slate-100 text-slate-900 rounded-lg flex items-center justify-center font-bold">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-base font-black text-slate-900 uppercase font-heading">Juego Limpio</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Practicamos la honestidad deportiva y la integridad en cada jugada. Ganar con honor y asumir los resultados con transparencia es la base de nuestra conducta.
+              </p>
+            </div>
+
+            <!-- Valor 3: Respeto -->
+            <div class="card-clean p-6 space-y-3">
+              <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center font-bold">
+                <i data-lucide="heart-handshake" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-base font-black text-slate-900 uppercase font-heading">Respeto</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Fomentamos el saludo cordial, el apretón de manos inicial y final, y la consideración absoluta hacia rivales, árbitros, maestros y compañeros de juego.
+              </p>
+            </div>
+
+            <!-- Valor 4: Sana Competitividad -->
+            <div class="card-clean p-6 space-y-3">
+              <div class="w-10 h-10 bg-slate-100 text-slate-900 rounded-lg flex items-center justify-center font-bold">
+                <i data-lucide="trophy" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-base font-black text-slate-900 uppercase font-heading">Sana Competitividad</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Impulsamos la superación personal y la pasión por competir al máximo nivel, aprendiendo constructivamente de los errores y celebrando el esfuerzo mutuo.
+              </p>
+            </div>
+
+            <!-- Valor 5: Disciplina -->
+            <div class="card-clean p-6 space-y-3 md:col-span-2 lg:col-span-1">
+              <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center font-bold">
+                <i data-lucide="target" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-base font-black text-slate-900 uppercase font-heading">Disciplina</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Cultivamos la constancia, la concentración profunda, el estudio metódico y el autocontrol para tomar decisiones calculadas tanto en el tablero como en la vida.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SECCIÓN CLASES (SEPARADA) ==================== -->
+    <section id="clases" class="py-16 sm:py-24 bg-slate-50 border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-3xl mx-auto text-center space-y-3 mb-14">
+          <span class="text-xs font-extrabold uppercase tracking-widest text-rose-600">Academia Formativa</span>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight font-heading">
+            Clases Multinivel
+          </h2>
+          <div class="w-12 h-1 bg-rose-600 mx-auto"></div>
+          <p class="text-slate-600 text-sm leading-relaxed max-w-xl mx-auto pt-2">
+            Aprende a tu propio ritmo con planes de estudio diseñados para cada etapa: desde los primeros movimientos hasta el alto rendimiento competitivo.
+          </p>
+        </div>
+
+        <div id="classes-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Renderizado dinámicamente con estilo limpio -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SECCIÓN TORNEOS (SEPARADA) ==================== -->
+    <section id="torneos" class="py-16 sm:py-24 bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-3xl mx-auto text-center space-y-3 mb-14">
+          <span class="text-xs font-extrabold uppercase tracking-widest text-rose-600">Competencia & Rating</span>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight font-heading">
+            Torneos Disponibles
+          </h2>
+          <div class="w-12 h-1 bg-rose-600 mx-auto"></div>
+          <p class="text-slate-600 text-sm leading-relaxed max-w-xl mx-auto pt-2">
+            Mide tu nivel en competencias reales, suma puntos para el ranking nacional y participa en nuestros torneos oficiales y sociales de la comuna.
+          </p>
+        </div>
+
+        <div id="tournaments-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <!-- Renderizado dinámicamente con estilo limpio (2 mosaicos) -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TABLERO VIRTUAL INTERACTIVO & APRENDIZAJE ==================== -->
+    <section id="tablero-virtual" class="py-16 sm:py-24 bg-slate-50 border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Encabezado de la Sección -->
+        <div class="max-w-3xl mx-auto text-center space-y-3 mb-10">
+          <span class="text-xs font-extrabold uppercase tracking-widest text-rose-600">Laboratorio Digital de Ajedrez</span>
+          <h2 class="text-3xl sm:text-5xl font-black text-slate-900 uppercase tracking-tight font-heading">
+            Entrena en el Tablero Digital
+          </h2>
+          <div class="w-12 h-1 bg-rose-600 mx-auto"></div>
+          <p class="text-slate-600 text-xs sm:text-sm max-w-xl mx-auto pt-1 leading-relaxed">
+            Explora el movimiento de cada figura o pon a prueba tu capacidad de cálculo resolviendo problemas tácticos en tiempo real con retroalimentación inmediata.
+          </p>
+
+          <!-- Selector de Modo Principal -->
+          <div class="pt-3 flex flex-wrap justify-center gap-3">
+            <button id="mode-learn-btn" class="tab-clean active font-bold">
+              1. Conocer Piezas y Reglas
+            </button>
+            <button id="mode-puzzle-btn" class="tab-clean font-bold">
+              2. Resolver Problemas Tácticos
+            </button>
+          </div>
+        </div>
+
+        <!-- Cuadrícula Principal: Tablero + Panel Interactivo -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
+          
+          <!-- Columna Izquierda: Tablero Virtual Interactivo -->
+          <div class="lg:col-span-7 flex flex-col items-center">
+            <div id="interactive-board-container" class="w-full">
+              <!-- Renderizado interactivo por chess-board.js -->
+            </div>
+            
+            <div class="w-full max-w-[440px] mt-4 flex items-center justify-between text-xs text-slate-500 font-medium px-1">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="volume-2" class="w-4 h-4 text-rose-600"></i> Sonidos acústicos de jugada activados
+              </span>
+              <span>Haz clic en la pieza y luego en su casilla de destino</span>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Panel Didáctico y Selector de Piezas -->
+          <div class="lg:col-span-5 w-full">
+            
+            <!-- PANEL MODO 1: CONOCER PIEZAS Y REGLAS -->
+            <div id="learn-panel" class="card-clean p-6 sm:p-8 space-y-5 bg-white shadow-sm">
+              
+              <!-- Selector Rápido de Piezas (Peón, Caballo, Alfil, Torre, Dama, Rey) -->
+              <div class="space-y-2">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                  Selecciona una pieza para explorarla en el tablero:
+                </span>
+                <div class="grid grid-cols-6 gap-1.5" id="piece-selector-buttons">
+                  <button data-piece="pawn" class="piece-sel-btn p-2 rounded-lg border border-rose-500 bg-rose-50 text-rose-600 font-bold text-center hover:scale-105 transition-all flex flex-col items-center">
+                    <span class="text-2xl">♙</span>
+                    <span class="text-[9px] uppercase font-semibold">Peón</span>
+                  </button>
+                  <button data-piece="knight" class="piece-sel-btn p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-bold text-center hover:scale-105 transition-all flex flex-col items-center">
+                    <span class="text-2xl">♘</span>
+                    <span class="text-[9px] uppercase font-semibold">Caballo</span>
+                  </button>
+                  <button data-piece="bishop" class="piece-sel-btn p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-bold text-center hover:scale-105 transition-all flex flex-col items-center">
+                    <span class="text-2xl">♗</span>
+                    <span class="text-[9px] uppercase font-semibold">Alfil</span>
+                  </button>
+                  <button data-piece="rook" class="piece-sel-btn p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-bold text-center hover:scale-105 transition-all flex flex-col items-center">
+                    <span class="text-2xl">♖</span>
+                    <span class="text-[9px] uppercase font-semibold">Torre</span>
+                  </button>
+                  <button data-piece="queen" class="piece-sel-btn p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-bold text-center hover:scale-105 transition-all flex flex-col items-center">
+                    <span class="text-2xl">♕</span>
+                    <span class="text-[9px] uppercase font-semibold">Dama</span>
+                  </button>
+                  <button data-piece="king" class="piece-sel-btn p-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 font-bold text-center hover:scale-105 transition-all flex flex-col items-center">
+                    <span class="text-2xl">♔</span>
+                    <span class="text-[9px] uppercase font-semibold">Rey</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Selector de Lecciones / Reglas Específicas de la Pieza (Tabs/Píldoras) -->
+              <div id="piece-lessons-container" class="space-y-2 border-t border-slate-100 pt-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider text-rose-600 block">
+                    Lecciones y Reglas:
+                  </span>
+                  <span id="lesson-step-badge" class="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    Lección 1 de 4
+                  </span>
+                </div>
+                <div id="piece-lessons-tabs" class="flex flex-wrap gap-1.5">
+                  <!-- Generado dinámicamente -->
+                </div>
+              </div>
+
+              <!-- Banner de Instrucción de la Lección Actual -->
+              <div id="lesson-instruction-box" class="p-4 rounded-xl bg-slate-900 text-white space-y-1.5 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span id="lesson-title" class="font-black text-xs uppercase tracking-wider text-rose-400">
+                    1. Movimiento Inicial
+                  </span>
+                  <button id="lesson-reset-btn" class="text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded transition-colors flex items-center gap-1">
+                    <span>🔄</span> Reiniciar
+                  </button>
+                </div>
+                <p id="lesson-text" class="text-xs text-slate-200 leading-relaxed"></p>
+              </div>
+
+              <!-- Selector de Coronación (Se activa cuando el Peón llega a la 8ª fila) -->
+              <div id="promotion-picker-container" class="hidden p-4 rounded-xl bg-gradient-to-br from-rose-50 to-amber-50 border-2 border-rose-300 shadow-md space-y-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-2xl">👑</span>
+                  <div>
+                    <h5 class="text-xs font-black uppercase text-slate-900">¡Coronación del Peón!</h5>
+                    <p class="text-[11px] text-slate-600">El peón alcanzó la última fila. Elige tu nueva pieza:</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-4 gap-2">
+                  <button data-promo="Q" class="promo-choice-btn p-2.5 rounded-lg bg-white border border-rose-200 hover:border-rose-600 hover:bg-rose-500 hover:text-white text-slate-900 shadow-sm transition-all flex flex-col items-center group">
+                    <span class="text-3xl group-hover:scale-110 transition-transform">♕</span>
+                    <span class="text-[10px] font-black uppercase mt-1">Dama</span>
+                    <span class="text-[9px] opacity-70">9 pts</span>
+                  </button>
+                  <button data-promo="R" class="promo-choice-btn p-2.5 rounded-lg bg-white border border-rose-200 hover:border-rose-600 hover:bg-rose-500 hover:text-white text-slate-900 shadow-sm transition-all flex flex-col items-center group">
+                    <span class="text-3xl group-hover:scale-110 transition-transform">♖</span>
+                    <span class="text-[10px] font-black uppercase mt-1">Torre</span>
+                    <span class="text-[9px] opacity-70">5 pts</span>
+                  </button>
+                  <button data-promo="B" class="promo-choice-btn p-2.5 rounded-lg bg-white border border-rose-200 hover:border-rose-600 hover:bg-rose-500 hover:text-white text-slate-900 shadow-sm transition-all flex flex-col items-center group">
+                    <span class="text-3xl group-hover:scale-110 transition-transform">♗</span>
+                    <span class="text-[10px] font-black uppercase mt-1">Alfil</span>
+                    <span class="text-[9px] opacity-70">3 pts</span>
+                  </button>
+                  <button data-promo="N" class="promo-choice-btn p-2.5 rounded-lg bg-white border border-rose-200 hover:border-rose-600 hover:bg-rose-500 hover:text-white text-slate-900 shadow-sm transition-all flex flex-col items-center group">
+                    <span class="text-3xl group-hover:scale-110 transition-transform">♘</span>
+                    <span class="text-[10px] font-black uppercase mt-1">Caballo</span>
+                    <span class="text-[9px] opacity-70">3 pts</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Feedback Dinámico de la Lección (Acierto o Regla completada) -->
+              <div id="learn-feedback-box" class="hidden p-4 rounded-xl border border-emerald-300 bg-emerald-50 text-slate-800 space-y-2">
+                <div class="flex items-start gap-2.5">
+                  <span class="text-xl flex-shrink-0">✅</span>
+                  <div class="space-y-1 flex-1">
+                    <h5 id="learn-feedback-title" class="text-xs font-black uppercase text-emerald-800">¡Jugada Correcta!</h5>
+                    <p id="learn-feedback-desc" class="text-xs text-slate-700 leading-relaxed"></p>
+                  </div>
+                </div>
+                <div id="learn-feedback-actions" class="flex items-center gap-2 pt-2 border-t border-emerald-200 justify-end">
+                  <!-- Botón Repetir / Siguiente insertados dinámicamente -->
+                </div>
+              </div>
+
+              <!-- Ficha Informativa de la Pieza (Valores y Consejos) -->
+              <div class="border-t border-slate-100 pt-4 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 id="piece-info-title" class="text-xl font-black text-slate-900 uppercase font-heading">♙ El Peón</h4>
+                  <span id="piece-info-badge" class="text-xs font-bold px-2.5 py-1 rounded bg-rose-50 text-rose-600 border border-rose-200">
+                    Valor: 1 Punto
+                  </span>
+                </div>
+
+                <div class="space-y-1">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">¿Cómo se mueve?</span>
+                  <p id="piece-info-move" class="text-xs sm:text-sm text-slate-700 leading-relaxed"></p>
+                </div>
+
+                <div class="space-y-1">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Reglas Especiales:</span>
+                  <p id="piece-info-special" class="text-xs text-slate-600 leading-relaxed"></p>
+                </div>
+
+                <div class="p-3.5 rounded-lg bg-rose-50/60 border border-rose-100 space-y-1">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-rose-600 block">Consejo Táctico:</span>
+                  <p id="piece-info-tip" class="text-xs text-slate-800 font-medium italic leading-relaxed"></p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- PANEL MODO 2: RESOLVER PROBLEMAS TÁCTICOS -->
+            <div id="puzzle-panel" class="hidden card-clean p-6 sm:p-8 space-y-5 bg-white shadow-sm">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 id="puzzle-title" class="text-lg font-black text-slate-900 uppercase font-heading">Problema 1: Mate del Pasillo</h4>
+                <span id="puzzle-level" class="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-700">
+                  Nivel Principiante
+                </span>
+              </div>
+
+              <div class="p-3.5 rounded-lg bg-slate-900 text-white text-xs font-semibold flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Turno: Juegan Blancas y ganan</span>
+              </div>
+
+              <p id="puzzle-instructions" class="text-xs sm:text-sm text-slate-600 leading-relaxed"></p>
+
+              <!-- Feedback del resultado (Éxito / Fallo / Pista) -->
+              <div id="puzzle-feedback" class="hidden"></div>
+
+              <!-- Controles del Entrenador -->
+              <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
+                <button id="puzzle-hint-btn" class="btn-secondary px-4 py-2 text-xs font-bold">
+                  Ver Pista
+                </button>
+                <button id="puzzle-reset-btn" class="btn-secondary px-4 py-2 text-xs font-bold">
+                  Reiniciar Posición
+                </button>
+                <button id="puzzle-next-btn" class="hidden btn-primary px-5 py-2 text-xs font-bold ml-auto">
+                  Siguiente Problema →
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== NOTICIAS DE AJEDREZ (FONDO BLANCO LIMPIO) ==================== -->
+    <section id="noticias" class="py-16 sm:py-24 bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-3xl mx-auto text-center space-y-3 mb-14">
+          <h2 class="text-3xl sm:text-5xl font-black text-slate-900 uppercase tracking-tight font-heading">
+            NOTICIAS DE AJEDREZ
+          </h2>
+          <div class="w-12 h-1 bg-rose-600 mx-auto"></div>
+          <p class="text-slate-600 text-xs sm:text-sm max-w-lg mx-auto pt-2">
+            Seguimiento de la actividad competitiva nacional e internacional que nutre el debate en nuestro club.
+          </p>
+        </div>
+
+        <div id="news-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Renderizado dinámico de las 3 noticias -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== CALENDARIO DE ACTIVIDADES (GRID MENSUAL) ==================== -->
+    <section id="calendario" class="py-16 sm:py-24 bg-slate-50 border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="max-w-3xl mx-auto text-center space-y-3 mb-10">
+          <span class="text-xs font-extrabold uppercase tracking-widest text-rose-600">Agenda Comunal</span>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight font-heading">
+            Calendario de Actividades
+          </h2>
+          <div class="w-12 h-1 bg-rose-600 mx-auto"></div>
+          <p class="text-slate-600 text-xs sm:text-sm max-w-lg mx-auto pt-1 leading-relaxed">
+            Planifica tu participación en torneos oficiales, clases formativas, talleres tácticos y jornadas comunitarias en nuestra sede.
+          </p>
+        </div>
+
+        <div class="card-clean p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto bg-white shadow-sm space-y-6">
+          
+          <!-- Barra Superior del Calendario: Mes, Navegación y Leyenda -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-lg">
+                <i data-lucide="calendar" class="w-5 h-5 text-rose-500"></i>
+              </div>
+              <div>
+                <h3 class="font-black text-xl text-slate-900 uppercase font-heading tracking-wide">
+                  Octubre 2026
+                </h3>
+                <span class="text-xs text-slate-500 font-medium">
+                  Sede Club Chess Maipú • Av. Pajaritos 2450
+                </span>
+              </div>
+            </div>
+
+            <!-- Leyenda de Categorías de Eventos -->
+            <div class="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span> Torneos
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-sky-50 text-sky-700 border border-sky-200">
+                <span class="w-2 h-2 rounded-full bg-sky-500"></span> Clases
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                <span class="w-2 h-2 rounded-full bg-purple-500"></span> Talleres
+              </span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Comunidad
+              </span>
+            </div>
+          </div>
+
+          <!-- Cuadrícula Mensual (Fiel al modelo: Barra oscura DOM.-SÁB. y celdas delineadas) -->
+          <div class="overflow-x-auto rounded-lg border-2 border-slate-700 shadow-sm">
+            <div class="min-w-[700px]">
+              
+              <!-- Fila Encabezado: Días de la semana en barra oscura (DOM., LUN., MAR., MIÉ., JUE., VIE., SÁB.) -->
+              <div class="grid grid-cols-7 bg-[#1e293b] text-white border-b-2 border-slate-700">
+                <div class="py-2.5 px-2 text-center text-xs font-black uppercase tracking-wider border-r border-slate-700">DOM.</div>
+                <div class="py-2.5 px-2 text-center text-xs font-black uppercase tracking-wider border-r border-slate-700">LUN.</div>
+                <div class="py-2.5 px-2 text-center text-xs font-black uppercase tracking-wider border-r border-slate-700">MAR.</div>
+                <div class="py-2.5 px-2 text-center text-xs font-black uppercase tracking-wider border-r border-slate-700">MIÉ.</div>
+                <div class="py-2.5 px-2 text-center text-xs font-black uppercase tracking-wider border-r border-slate-700">JUE.</div>
+                <div class="py-2.5 px-2 text-center text-xs font-black uppercase tracking-wider border-r border-slate-700">VIE.</div>
+                <div class="py-2.5 px-2 text-center text-xs font-black uppercase tracking-wider">SÁB.</div>
+              </div>
+
+              <!-- Matriz de Días (Generada por JavaScript: 35 celdas con bordes y sombreado de días inactivos) -->
+              <div id="calendar-grid" class="grid grid-cols-7 bg-slate-300 gap-[1px]">
+                <!-- Días y eventos insertados dinámicamente -->
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Panel de Detalle del Evento Seleccionado -->
+          <div id="calendar-event-modal" class="p-4 sm:p-5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span id="selected-event-badge" class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200">
+                  Próxima Actividad
+                </span>
+                <span id="selected-event-time" class="text-xs font-mono font-bold text-slate-500">
+                  Sábado 24 Oct • 09:30 hrs
+                </span>
+              </div>
+              <h4 id="selected-event-title" class="font-extrabold text-slate-900 text-sm sm:text-base">
+                IRT Cuna de la Patria - R1 y R2
+              </h4>
+              <p id="selected-event-desc" class="text-xs text-slate-600 max-w-2xl leading-relaxed">
+                Torneo oficial válido para el Ranking Nacional y FIDE. Rondas 1 y 2 con control 60 min + 30 seg.
+              </p>
+            </div>
+            <button onclick="openModal('registro')" class="btn-primary px-4 py-2 text-xs font-bold whitespace-nowrap self-stretch sm:self-auto flex items-center justify-center gap-1.5 shadow-sm">
+              <span>Inscribirme / Reservar</span> →
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== SEDE, HORARIOS & MAPA ==================== -->
+    <section id="sede" class="py-16 sm:py-24 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          
+          <div class="lg:col-span-5 space-y-6">
+            <div class="space-y-2">
+              <span class="text-xs font-extrabold uppercase tracking-widest text-rose-600">Punto de Encuentro</span>
+              <h2 class="text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight font-heading">
+                Sede y Horarios
+              </h2>
+              <div class="w-12 h-1 bg-rose-600"></div>
+              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed pt-2">
+                A pasos de Metro Plaza de Maipú (Línea 5). Un espacio equipado con tableros de madera reglamentarios, relojes digitales DGT y biblioteca de estudio.
+              </p>
+            </div>
+
+            <div class="card-clean p-6 space-y-4">
+              <h4 class="text-xs font-black tracking-widest uppercase text-slate-900 border-b border-slate-100 pb-2">
+                Horarios de Funcionamiento
+              </h4>
+              <div id="hours-list" class="space-y-3 divide-y divide-slate-100">
+                <!-- Horarios generados por JS -->
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <a href="https://wa.me/56984527193?text=Hola%20Chess%20Maip%C3%BA,%20deseo%20m%C3%A1s%20informaci%C3%B3n" target="_blank" rel="noopener noreferrer" class="card-clean p-4 flex items-center justify-between hover:border-rose-400 transition-colors">
+                <span class="text-xs font-bold text-slate-900">WhatsApp Oficial: +56 9 8452 7193</span>
+                <span class="text-xs text-rose-600 font-bold">Contactar →</span>
+              </a>
+              <a href="mailto:contacto@chessmaipu.cl" class="card-clean p-4 flex items-center justify-between hover:border-rose-400 transition-colors">
+                <span class="text-xs font-bold text-slate-900">Correo: contacto@chessmaipu.cl</span>
+                <span class="text-xs text-rose-600 font-bold">Escribir →</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Mapa Interactivo en Maipú -->
+          <div class="lg:col-span-7">
+            <div class="card-clean p-5 space-y-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-900">Av. Pajaritos 2450, Maipú, Santiago</span>
+                <span class="text-slate-500">Metro Plaza de Maipú (L5)</span>
+              </div>
+
+              <!-- Leaflet Map -->
+              <div id="map"></div>
+
+              <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+                <span>Micros: 401, 405, 506, I01</span>
+                <a href="https://maps.google.com/?q=-33.5106,-70.7578" target="_blank" rel="noopener noreferrer" class="text-rose-600 hover:underline font-bold">
+                  Abrir en Google Maps ↗
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODAL DE REGISTRO / SUSCRIPCIÓN ==================== -->
+  <div id="registration-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in">
+    <div class="w-full max-w-lg p-8 relative bg-white border border-slate-200 rounded-xl shadow-2xl">
+      <button onclick="closeModal('registro')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-800 p-1">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="space-y-1 mb-6">
+        <span class="text-[10px] font-extrabold tracking-widest uppercase text-rose-600">
+          Membresía & Registro
+        </span>
+        <h3 class="text-2xl font-black text-slate-900 uppercase font-heading">Únete al Club Chess Maipú (CCM)</h3>
+        <p class="text-xs text-slate-500">
+          Regístrate como socio, inscríbete a nuestras clases o participa en los próximos torneos.
+        </p>
+      </div>
+
+      <form id="subscription-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1" for="form-name">Nombre y Apellido</label>
+          <input type="text" id="form-name" required placeholder="Ej. Valentina Morales" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-600 text-xs">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1" for="form-email">Correo Electrónico</label>
+            <input type="email" id="form-email" required placeholder="tu@correo.cl" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-600 text-xs">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1" for="form-phone">Teléfono / WhatsApp</label>
+            <input type="tel" id="form-phone" required placeholder="+56 9 1234 5678" class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-600 text-xs">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1" for="form-level">Nivel de Juego</label>
+            <select id="form-level" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:border-rose-600 text-xs">
+              <option value="iniciacion">Iniciación (Sé poco o nada)</option>
+              <option value="intermedio">Intermedio (Juego en Lichess/Chess.com)</option>
+              <option value="avanzado">Avanzado / Con ELO FIDE</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1" for="form-interest">Interés Principal</label>
+            <select id="form-interest" class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:border-rose-600 text-xs">
+              <option value="socio">Quiero ser Socio del Club</option>
+              <option value="clases">Inscripción a Clases</option>
+              <option value="torneos">Participar en Torneos</option>
+              <option value="social">Juego Libre de Fin de Semana</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="btn-primary w-full py-3 text-xs font-bold uppercase tracking-wider">
+            Confirmar Inscripción
+          </button>
+        </div>
+      </form>
+
+      <div id="form-success-msg" class="hidden p-4 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs text-center mt-4">
+        🎉 ¡Registro exitoso! Nos pondremos en contacto contigo a la brevedad para darte la bienvenida al club.
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="bg-slate-900 text-slate-400 text-xs pt-16 pb-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-slate-800">
+        
+        <div class="space-y-3">
+          <div class="flex items-center gap-2 text-white font-black text-sm">
+            <span class="w-6 h-6 bg-rose-600 text-white flex items-center justify-center rounded">♟</span>
+            CHESS MAIPÚ
+          </div>
+          <p class="text-slate-400 leading-relaxed text-[11px]">
+            Club Comunal de Ajedrez de Maipú. Fomentando el pensamiento estratégico, la disciplina y el encuentro vecinal en la Región Metropolitana.
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <h5 class="font-bold text-white uppercase tracking-wider text-[11px]">Menú Rápido</h5>
+          <ul class="space-y-1.5 text-[11px]">
+            <li><a href="#inicio" class="hover:text-white">Inicio</a></li>
+            <li><a href="#clases" class="hover:text-white">Clases Multinivel</a></li>
+            <li><a href="#torneos" class="hover:text-white">Torneos de Ajedrez</a></li>
+            <li><a href="#tablero-virtual" class="hover:text-white">Tablero Virtual</a></li>
+            <li><a href="#noticias" class="hover:text-white">Noticias de Ajedrez</a></li>
+          </ul>
+        </div>
+
+        <div class="space-y-2">
+          <h5 class="font-bold text-white uppercase tracking-wider text-[11px]">Horarios</h5>
+          <ul class="space-y-1.5 text-[11px] text-slate-400">
+            <li>Lun - Jue: 16:00 - 21:30 hrs</li>
+            <li>Viernes: 17:00 - 22:30 hrs (Blitz)</li>
+            <li>Sábados: 10:00 - 20:00 hrs</li>
+            <li>Domingos: 11:00 - 16:00 hrs</li>
+          </ul>
+        </div>
+
+        <div class="space-y-2">
+          <h5 class="font-bold text-white uppercase tracking-wider text-[11px]">Contacto</h5>
+          <p class="text-[11px] text-slate-400">
+            Av. Pajaritos 2450, Maipú.<br>
+            Santiago, Chile.<br>
+            <span class="text-rose-400">contacto@chessmaipu.cl</span><br>
+            +56 9 8452 7193
+          </p>
+        </div>
+
+      </div>
+
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-4">
+        <span>© 2026 Chess Maipú - Club Comunal de Ajedrez. Todos los derechos reservados.</span>
+        <span>Maipú, Santiago, Chile</span>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="chess-board.js"></script>
+  <script src="app.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
